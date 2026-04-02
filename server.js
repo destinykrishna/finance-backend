@@ -5,6 +5,13 @@ const connectDB = require('./src/config/db')
 connectDB()
 
 const PORT = process.env.PORT || 5000
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
-})
+
+let server;
+if (require.main === module) {
+  // Only start server if this file is run directly (not imported for testing)
+  server = app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`)
+  })
+}
+
+module.exports = { app, server }
