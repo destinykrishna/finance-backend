@@ -2,6 +2,14 @@ const request = require('supertest');
 const app = require('../app');
 const User = require('../models/user.model');
 
+// Test constants - Generic test credentials
+const TEST_CREDENTIALS = {
+  password: 'TestPass@123',
+  invalidPassword: 'WrongPassword@123',
+  wrongPassword: 'WrongPass@123',
+  loginPassword: 'LoginPass@123'
+};
+
 // Test data
 let authToken;
 let userId;
@@ -23,7 +31,7 @@ describe('Authentication Endpoints', () => {
         .send({
           name: 'Test User Auth',
           email: 'test-auth-register@zorvyn.com',
-          password: 'TestPass@123'
+          password: TEST_CREDENTIALS.password
         });
 
       expect(response.status).toBe(201);
@@ -52,7 +60,7 @@ describe('Authentication Endpoints', () => {
         .send({
           name: 'Test User',
           email: 'invalid-email',
-          password: 'TestPass@123'
+          password: TEST_CREDENTIALS.password
         });
 
       // Note: API currently accepts invalid emails, this test documents current behavior
@@ -69,7 +77,7 @@ describe('Authentication Endpoints', () => {
         .send({
           name: 'Test User 1',
           email,
-          password: 'TestPass@123'
+          password: TEST_CREDENTIALS.password
         });
 
       // Second registration with same email
@@ -78,7 +86,7 @@ describe('Authentication Endpoints', () => {
         .send({
           name: 'Test User 2',
           email,
-          password: 'TestPass@123'
+          password: TEST_CREDENTIALS.password
         });
 
       expect(response.status).toBe(400);
@@ -95,7 +103,7 @@ describe('Authentication Endpoints', () => {
         .send({
           name: 'Test User Login',
           email: 'test-auth-login@zorvyn.com',
-          password: 'LoginPass@123'
+          password: TEST_CREDENTIALS.loginPassword
         });
     });
 
@@ -104,7 +112,7 @@ describe('Authentication Endpoints', () => {
         .post('/api/auth/login')
         .send({
           email: 'test-auth-login@zorvyn.com',
-          password: 'LoginPass@123'
+          password: TEST_CREDENTIALS.loginPassword
         });
 
       expect(response.status).toBe(200);
@@ -122,7 +130,7 @@ describe('Authentication Endpoints', () => {
         .post('/api/auth/login')
         .send({
           email: 'test-auth-login@zorvyn.com',
-          password: 'WrongPass@123'
+          password: TEST_CREDENTIALS.wrongPassword
         });
 
       expect(response.status).toBe(401);
@@ -134,7 +142,7 @@ describe('Authentication Endpoints', () => {
         .post('/api/auth/login')
         .send({
           email: 'non-existent@zorvyn.com',
-          password: 'AnyPass@123'
+          password: TEST_CREDENTIALS.invalidPassword
         });
 
       expect(response.status).toBe(401);

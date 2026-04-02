@@ -3,6 +3,11 @@ const mongoose = require('mongoose');
 const app = require('../app');
 const User = require('../models/user.model');
 
+// Test constants - Generic test credentials
+const TEST_CREDENTIALS = {
+  password: 'UserPass@123'
+};
+
 let adminToken;
 let adminUserId;
 let testUserId;
@@ -117,7 +122,7 @@ describe('User Management Endpoints', () => {
         .send({
           name: 'Regular User',
           email: 'regular-user@zorvyn.com',
-          password: 'UserPass@123'
+          password: TEST_CREDENTIALS.password
         });
 
       const userToken = userRes.body.token;
@@ -182,7 +187,7 @@ describe('User Management Endpoints', () => {
         .send({
           name: 'Another User',
           email: 'another-user@zorvyn.com',
-          password: 'UserPass@123'
+          password: TEST_CREDENTIALS.password
         });
 
       const userToken = userRes.body.token;
