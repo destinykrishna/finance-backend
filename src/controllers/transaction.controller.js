@@ -23,13 +23,13 @@ const getTransactions = async (req, res) => {
     }
 
     const skip = (page - 1) * limit;
-    const transactions = await Transaction.find(filter)
+    const transactions = await transactionModel.find(filter)
       .populate("createdBy", "name email")
       .sort({ date: -1 })
       .skip(skip)
       .limit(Number(limit));
 
-    const total = await Transaction.countDocuments(filter);
+    const total = await transactionModel.countDocuments(filter);
     res.json({ success: true, total, page: Number(page), data: transactions });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -72,7 +72,7 @@ const createTransaction = async (req, res) => {
 //PUT /api/transactions/:id - update transaction
 const updateTransaction = async (req, res) => {
   try {
-    const transaction = await Transaction.findOneAndUpdate(
+    const transaction = await transactionModel.findOneAndUpdate(
       { _id: req.params.id, isDeleted: false },
       req.body,
       { new: true, runValidators: true }
@@ -88,7 +88,7 @@ const updateTransaction = async (req, res) => {
 // DELETE /api/transactions/:id — soft delete
 const deleteTransaction = async (req, res) => {
   try {
-    const transaction = await Transaction.findOneAndUpdate(
+    const transaction = await transactionModel.findOneAndUpdate(
       { _id: req.params.id, isDeleted: false },
       { isDeleted: true },
       { new: true }
