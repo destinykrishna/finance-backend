@@ -4,11 +4,16 @@ const userModel = require("../models/user.model")
 const authMiddleware = async (req, res, next) => {
   try {
     let token
+    // First, check Authorization header
     if (
       req.headers.authorization &&
       req.headers.authorization.startsWith("Bearer")
     ) {
       token = req.headers.authorization.split(" ")[1]
+    }
+    // If no Authorization header, check cookies
+    if (!token && req.cookies && req.cookies.token) {
+      token = req.cookies.token
     }
     if (!token) {
       return res

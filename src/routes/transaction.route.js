@@ -3,7 +3,7 @@ const express = require('express')
 const router = express.Router()
 const { authMiddleware } = require('../middleware/auth.middleware')
 const { authorize } = require('../middleware/rbac.middleware')
-const { apiLimiter } = require('../middleware/rateLimit')
+const { apiLimiter } = require('../middleware/rateLimit.middleware')
 const { getTransactions, createTransaction, updateTransaction, deleteTransaction } = require('../controllers/transaction.controller')
 
 

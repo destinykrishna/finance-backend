@@ -4,7 +4,7 @@ const cookieParser = require('cookie-parser')
 const helmet = require('helmet')
 const cors = require('cors')
 const morgan = require('morgan')
-const { globalLimiter } = require('./middleware/rateLimit')
+const { globalLimiter } = require('./middleware/rateLimit.middleware')
 
 // Middleware
 app.use(helmet())
@@ -16,6 +16,7 @@ app.use(globalLimiter) // Apply global rate limiting
 
 // Routes
 app.use('/api/auth', require('./routes/auth.route'))
+app.use('/api/users', require('./routes/user.route'))
 app.use('/api/transactions', require('./routes/transaction.route'))
 app.use('/api/dashboard', require('./routes/dashboard.route'))
 

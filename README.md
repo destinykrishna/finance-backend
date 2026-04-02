@@ -12,22 +12,23 @@ A robust, production-ready financial transaction management backend built with N
 - [Running the Application](#running-the-application)
 - [Project Structure](#project-structure)
 - [API Documentation](#api-documentation)
-- [Security Features](#security-features)
+- [Authentication & Token Management](#authentication--token-management)
+- [Role Management](#role-management)
 - [Database Models](#database-models)
-- [User Roles & Permissions](#user-roles--permissions)
+- [Security Features](#security-features)
 - [Error Handling](#error-handling)
 - [Contributing](#contributing)
 - [License](#license)
 
 ## ✨ Features
 
-- **User Authentication**: Secure registration and login with JWT tokens
+- **User Authentication**: Secure registration and login with JWT tokens stored in cookies
 - **Role-Based Access Control (RBAC)**: Three user roles - Admin, Analyst, Viewer
 - **Transaction Management**: Create, read, update, and soft delete transactions
 - **Analytics Dashboard**: Real-time financial summaries and trends
 - **Rate Limiting**: Protection against brute force attacks and API abuse
 - **Input Validation**: Comprehensive data validation using Joi schema
-- **Security**: Helmet.js middleware, CORS, password hashing with bcrypt
+- **Security**: Helmet.js middleware, CORS, password hashing with bcrypt, cookie-based JWT storage
 - **Logging**: Morgan HTTP request logging
 - **MongoDB Integration**: Mongoose ODM for data persistence
 
@@ -43,7 +44,7 @@ A robust, production-ready financial transaction management backend built with N
 | **Joi** | Input validation |
 | **Helmet** | Security headers |
 | **CORS** | Cross-origin requests |
-| **Morgan** | HTTP logging |
+| **cookie-parser** | Cookie parsing middleware |
 | **express-rate-limit** | Rate limiting |
 | **dotenv** | Environment variables |
 
@@ -104,7 +105,9 @@ NODE_ENV=development
 | `JWT_EXPIRES_IN` | JWT expiration time | 7d, 24h |
 | `NODE_ENV` | Environment mode | development, production |
 
-## ▶️ Running the Application
+## ▶️ Running the Application & Getting Started
+
+### Running the Application
 
 ### Development Mode
 Run with auto-reload using `nodemon`:
@@ -118,6 +121,33 @@ npm start
 ```
 
 The server will start on `http://localhost:5000` (or your configured PORT)
+
+### First Time Setup
+
+1. **Start the server** using `npm run dev` or `npm start`
+
+2. **Create the first admin user**:
+   - Register a new user (default role will be 'viewer')
+   - Update the role in MongoDB directly:
+   ```javascript
+   db.users.updateOne(
+     { email: "your-email@example.com" },
+     { $set: { role: "admin" } }
+   )
+   ```
+
+3. **Use the admin user** to create or promote other users:
+   - Log in with the admin account
+   - Use the API to create new users or promote existing ones
+   - New users can self-register, then admins can assign roles
+
+### Token Cookie Management
+
+After registration or login:
+- The server automatically sets a secure HTTP-only cookie containing the JWT token
+- This cookie is sent with every subsequent request
+- The token expires after 7 days (configurable)
+- Users don't need to manually handle tokens in most client applications
 
 ## 📁 Project Structure
 
@@ -135,8 +165,8 @@ Zorvyn/
 │   ├── middleware/
 │   │   ├── auth.middleware.js      # JWT verification
 │   │   ├── rbac.middleware.js      # Role authorization
-│   │   ├── validate.js             # Input validation
-│   │   └── rateLimit.js            # Rate limiting
+│   │   ├── validate.middleware.js             # Input validation
+│   │   └── rateLimit.middleware.js            # Rate limiting
 │   ├── models/
 │   │   ├── user.model.js           # User schema
 │   │   └── transaction.model.js    # Transaction schema
@@ -164,6 +194,9 @@ http://localhost:5000/api
 ### Authentication Endpoints
 
 #### Register User
+
+**Note:** New users are created with the default role `viewer`. To assign admin or analyst roles, an authenticated admin user must update the role through the user management endpoint or directly in the database.
+
 ```http
 POST /api/auth/register
 Content-Type: application/json
@@ -171,12 +204,11 @@ Content-Type: application/json
 {
   "name": "John Doe",
   "email": "john@example.com",
-  "password": "securePassword123",
-  "role": "viewer"
+  "password": "securePassword123"
 }
 ```
 
-**Response (201 Created)**
+**Response (201 Created):** Token is automatically stored in a secure HTTP-only cookie
 ```json
 {
   "success": true,
@@ -219,10 +251,12 @@ Content-Type: application/json
 
 ### Transaction Endpoints
 
-All transaction endpoints require authentication. Include the JWT token in the Authorization header:
+All transaction endpoints require authentication. The JWT token is automatically sent via cookies or you can include it in the Authorization header:
 ```http
 Authorization: Bearer YOUR_JWT_TOKEN
 ```
+
+Tokens are automatically stored in HTTP-only cookies after login/registration, so cookies handle authentication transparently.
 
 #### Get All Transactions (with filters)
 ```http
@@ -340,6 +374,83 @@ GET /api/dashboard/recent-activity
 Authorization: Bearer YOUR_JWT_TOKEN
 ```
 
+### User Management Endpoints (Admin Only)
+
+#### Get All Users
+```http
+GET /api/users
+Authorization: Bearer ADMIN_TOKEN
+```
+
+**Response (200 OK)**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "65ab123...",
+      "name": "John Doe",
+      "email": "john@example.com",
+      "role": "viewer",
+      "isActive": true,
+      "createdAt": "2024-04-01T10:30:00Z"
+    }
+  ]
+}
+```
+
+#### Update User Role (Admin Only)
+```http
+PUT /api/users/:userId/role
+Authorization: Bearer ADMIN_TOKEN
+Content-Type: application/json
+
+{
+  "role": "analyst"
+}
+```
+
+**Valid roles:** `admin`, `analyst`, `viewer`
+
+**Response (200 OK)**
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "65ab123...",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "role": "analyst",
+    "isActive": true
+  }
+}
+```
+
+#### Update User Status (Admin Only)
+```http
+PUT /api/users/:userId/status
+Authorization: Bearer ADMIN_TOKEN
+Content-Type: application/json
+
+{
+  "isActive": false
+}
+```
+
+**Response (200 OK)**
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "65ab123...",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "role": "viewer",
+    "isActive": false
+  }
+}
+```
+
 ## 🔒 Security Features
 
 ### Rate Limiting
@@ -357,21 +468,83 @@ Authorization: Bearer YOUR_JWT_TOKEN
 - Request body validation at middleware level
 - Type checking and constraint enforcement
 
-### Authentication & Authorization
-- JWT-based stateless authentication
-- Role-Based Access Control (RBAC)
-- Token expiration: 7 days (configurable)
-- Active user status verification
+## 🔐 Authentication & Token Management
 
-## 👥 User Roles & Permissions
+### Token Storage
+- Tokens are stored in **secure HTTP-only cookies** automatically upon registration/login
+- Tokens can also be sent via `Authorization: Bearer TOKEN` header for flexibility
+- HTTP-only cookies prevent XSS attacks by making tokens inaccessible to JavaScript
 
-| Role | Get Transactions | Create | Update | Delete | Analytics |
-|------|-----------------|--------|--------|--------|-----------|
-| **Admin** | ✅ | ✅ | ✅ | ✅ | ✅ (All) |
-| **Analyst** | ✅ | ✅ | ✅ | ❌ | ✅ (Limited) |
-| **Viewer** | ✅ | ❌ | ❌ | ❌ | ✅ (Read-only) |
+### Token Access
+The authentication middleware checks for tokens in this order:
+1. **Authorization header**: `Authorization: Bearer YOUR_TOKEN`
+2. **HTTP-only cookie**: Automatically set during login/registration
 
-## 📊 Database Models
+### Automatic Token Management
+- Tokens are automatically stored as cookies by the server
+- Cookies are automatically sent with every request
+- Token expiration: 7 days (configurable via `JWT_EXPIRES_IN`)
+
+### Security Features
+- **JWT-based stateless authentication**
+- **Role-Based Access Control (RBAC)**
+- **Token expiration**: 7 days (configurable)
+- **Active user status verification**
+- **Password hashing with bcrypt** (salt rounds: 12)
+
+## 👥 Role Management
+
+### Default Role Assignment
+- **All new users are created with the `viewer` role by default**
+- The `viewer` role is read-only (cannot create, update, or delete transactions)
+
+### Role Update Methods
+
+#### Method 1: Admin API Endpoint (Recommended)
+Admin users can update any user's role via the API:
+
+```http
+PUT /api/users/:userId/role
+Authorization: Bearer ADMIN_TOKEN
+Content-Type: application/json
+
+{
+  "role": "analyst"
+}
+```
+
+#### Method 2: Direct Database Update
+Directly update the user document in MongoDB:
+
+```javascript
+db.users.updateOne(
+  { email: "user@example.com" },
+  { $set: { role: "admin" } }
+)
+```
+
+### First Admin Setup (IMPORTANT)
+⚠️ **The first admin must be set directly in the MongoDB database** for security reasons:
+
+```javascript
+// After creating a user in MongoDB, update their role to admin
+db.users.updateOne(
+  { email: "first.admin@zorvyn.com" },
+  { $set: { role: "admin" } }
+)
+```
+
+Once the first admin exists, they can promote other users through the API.
+
+### Role Hierarchy
+
+| Role | Get Transactions | Create | Update | Delete | Manage Users | Analytics |
+|------|-----------------|--------|--------|--------|-------------|-----------|
+| **Admin** | ✅ | ✅ | ✅ | ✅ | ✅ (Full) | ✅ (All) |
+| **Analyst** | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ (Limited) |
+| **Viewer** | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ (Read-only) |
+
+##  Database Models
 
 ### User Model
 ```javascript
@@ -430,7 +603,30 @@ To test the API, you can use:
 - [cURL](https://curl.se/)
 - [Thunder Client](https://www.thunderclient.com/) (VS Code extension)
 
-Example with cURL:
+### Important Notes on Testing
+
+1. **Automatic Cookie Handling**: Most REST clients (Postman, Insomnia) automatically handle cookies. Simply authenticate once, and subsequent requests will use the stored token.
+
+2. **cURL with Cookies**: Use `-c` and `-b` flags to save and send cookies:
+```bash
+# Save cookie to file
+curl -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -c cookies.txt \
+  -d '{"email":"user@example.com","password":"password123"}'
+
+# Use cookie in next request
+curl -X GET http://localhost:5000/api/transactions \
+  -b cookies.txt
+```
+
+3. **Bearer Token Alternative**: You can also send the token via Authorization header:
+```bash
+curl -X GET http://localhost:5000/api/transactions \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
+
+### Example with cURL
 ```bash
 # Register
 curl -X POST http://localhost:5000/api/auth/register \
