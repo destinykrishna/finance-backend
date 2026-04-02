@@ -82,7 +82,7 @@ Create a `.env` file in the root directory with the following variables:
 PORT=5000
 
 # Database Configuration
-MONGO_URI=mongodb://localhost:27017/zorvyn
+MONGO_URI=mongodb://localhost:27017/your_db
 # OR for MongoDB Atlas:
 # MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/zorvyn?retryWrites=true&w=majority
 
