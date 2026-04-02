@@ -23,7 +23,7 @@ const updateUserRole = async (req, res) => {
 
     const user = await userModel.findByIdAndUpdate(req.params.id, { role }, { new: true }).select('-password')
     if (!user) return res.status(404).json({ success: false, message: 'User not found' })
-    res.json({ success: true, data: user })
+    res.status(200).json({ success: true, data: user })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
   }
@@ -35,7 +35,7 @@ const updateUserStatus = async (req, res) => {
     const { isActive } = req.body
     const user = await userModel.findByIdAndUpdate(req.params.id, { isActive }, { new: true }).select('-password')
     if (!user) return res.status(404).json({ success: false, message: 'User not found' })
-    res.json({ success: true, data: user })
+    res.status(200).json({ success: true, data: user })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
   }

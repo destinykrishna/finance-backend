@@ -1,6 +1,6 @@
 const transactionModel = require("../models/transaction.model");
 
-//GET /api/transactions - with filters
+
 
 const getTransactions = async (req, res) => {
   try {
@@ -30,13 +30,13 @@ const getTransactions = async (req, res) => {
       .limit(Number(limit));
 
     const total = await transactionModel.countDocuments(filter);
-    res.json({ success: true, total, page: Number(page), data: transactions });
+    res.status(200).json({ success: true, total, page: Number(page), data: transactions });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 };
 
-//POST /api/transactions
+
 const createTransaction = async (req, res) => {
   try {
     const { amount, type, category, date, notes } = req.body;
@@ -69,7 +69,7 @@ const createTransaction = async (req, res) => {
   }
 };
 
-//PUT /api/transactions/:id - update transaction
+
 const updateTransaction = async (req, res) => {
   try {
     const transaction = await transactionModel.findOneAndUpdate(
@@ -85,7 +85,6 @@ const updateTransaction = async (req, res) => {
 }
 
 
-// DELETE /api/transactions/:id — soft delete
 const deleteTransaction = async (req, res) => {
   try {
     const transaction = await transactionModel.findOneAndUpdate(
@@ -94,7 +93,7 @@ const deleteTransaction = async (req, res) => {
       { new: true }
     )
     if (!transaction) return res.status(404).json({ success: false, message: 'Transaction not found' });
-    res.json({ success: true, message: 'Transaction deleted' })
+    res.status(200).json({ success: true, message: 'Transaction deleted' })
   } catch (err) {
     res.status(500).json({ success: false, message: err.message })
   }

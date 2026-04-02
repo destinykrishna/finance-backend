@@ -12,5 +12,9 @@ app.use(morgan('dev'))
 app.use(express.json())
 app.use(cookieParser())
 
+// Routes
+app.use('/api/auth', require('./routes/auth.route'))
+app.use('/api/transactions', require('./routes/transaction.route'))
+app.use('/api/dashboard', require('./routes/dashboard.route'))
 
 module.exports = app
